@@ -16,6 +16,7 @@ EXEMPT_ROUTES = ['/register', '/login', '/refresh','/progress']
 def create_app():
     app = Flask(__name__)
     CORS(app, resources={r"/*": {"origins": "*"}})
+    CORS(app, resources={r"/*": {"origins": ["https://your-netlify-site.netlify.app"]}})
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
     
 
@@ -68,6 +69,8 @@ def create_app():
 
 
 app = create_app()  
+CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": ["https://your-netlify-site.netlify.app"]}})
 
 if __name__ == '__main__':
     app.run(debug=True)
