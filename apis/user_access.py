@@ -67,7 +67,8 @@ def login_user():
             "user_id": user.id,
             "Emailid": user.Emailid,
             "access_token": access_token,
-            "refreshToken": refreshToken,
+            "refresh_token": refreshToken,
+            "userType":userType
         }), 200
 
     except Exception as e:
