@@ -13,7 +13,7 @@ chatgroq_bp = Blueprint("chatgroq", __name__)
 
 
 # --- Config ---
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "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"
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 MODEL_NAME = "llama3-70b-8192"
 
