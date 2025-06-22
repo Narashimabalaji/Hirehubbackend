@@ -71,6 +71,12 @@ def create_app():
 app = create_app()  
 CORS(app, resources={r"/*": {"origins": "*"}})
 CORS(app, resources={r"/*": {"origins": ["https://your-netlify-site.netlify.app"]}})
+CORS(app,
+     origins=["https://hirehub04.netlify.app"],  # your frontend URL
+     supports_credentials=True,
+     allow_headers=["Authorization", "Content-Type"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+CORS(candidate_bp, origins=["https://hirehub04.netlify.app"], supports_credentials=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
