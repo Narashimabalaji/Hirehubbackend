@@ -16,6 +16,7 @@ EXEMPT_ROUTES = ['/register', '/login', '/refresh','/progress']
 def create_app():
     app = Flask(__name__)
     CORS(app, resources={r"/*": {"origins": "*"}})
+    CORS(candidate_bp, origins=["https://hirehub04.netlify.app"], supports_credentials=True)
     CORS(app, resources={r"/*": {"origins": ["https://your-netlify-site.netlify.app"]}})
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
     
