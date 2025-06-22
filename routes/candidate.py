@@ -18,6 +18,7 @@ candidate_bp = Blueprint("candidate", __name__)
 client = MongoClient("mongodb+srv://vijayprabakaran1905:Mongodbhirehub@cluster0.uma8of4.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db_jobportal = client["job_portal"]
 jobs_collection = db_jobportal["jobs"]
+resume_stats = db_jobportal["resume_stats"]
 SUPABASE_URL="https://ravrvsezztusrbnynuhj.supabase.co"
 SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhdnJ2c2V6enR1c3JibnludWhqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NzQ2MTQ5NCwiZXhwIjoyMDYzMDM3NDk0fQ.anh2MgM_ekIGWgCQvV198GudwpHPxDQcbOh4YffiTVY"
 SUPABASE_BUCKET="resumes"
@@ -161,13 +162,11 @@ def serialize_job(job):
         "created_at": job.get("created_at").isoformat() if isinstance(job.get("created_at"), datetime) else job.get("created_at"),
     }
 
-# Get all approved jobs
 @candidate_bp.route('/api/jobs', methods=['GET'])
 def get_all_jobs():
     try:
         status = request.args.get("status")
         query = {}
-
         if status:
             query["status"] = status
 
@@ -178,7 +177,6 @@ def get_all_jobs():
         return jsonify({"error": str(e)}), 500
 
 
-# Get resumes for a specific job
 @candidate_bp.route('/resumes/<job_id>', methods=['GET'])
 def get_resumes(job_id):
     try:
@@ -193,6 +191,7 @@ def get_resumes(job_id):
         return jsonify({"resumes": result}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @candidate_bp.route("/approve-job/<job_id>", methods=["POST"])
 def approve_job(job_id):
@@ -213,7 +212,6 @@ def reject_job(job_id):
     try:
         data = request.get_json()
         reason = data.get("reason", "No reason provided")
-
         result = db_jobportal.jobs.update_one(
             {"_id": ObjectId(job_id)},
             {"$set": {"status": "rejected", "rejection_reason": reason}}
@@ -223,6 +221,8 @@ def reject_job(job_id):
         return jsonify({"message": "Job rejected"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
 @candidate_bp.route("/admin/view_resume", methods=["GET"])
 def view_resume():
     try:
@@ -234,7 +234,6 @@ def view_resume():
         if not resume_url:
             return jsonify({"error": "Missing resume URL"}), 400
 
-        # Log view
         db_jobportal.logs.insert_one({
             "adminEmail": admin_email,
             "jobId": job_id,
@@ -244,7 +243,6 @@ def view_resume():
             "timestamp": datetime.utcnow().isoformat()
         })
 
-        # Update view count
         resume_stats.update_one(
             {"resumeUrl": resume_url},
             {
@@ -264,7 +262,7 @@ def view_resume():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ✅ Download Resume and Track Download Count
+
 @candidate_bp.route("/admin/download_resume", methods=["GET"])
 def download_resume():
     try:
@@ -276,7 +274,6 @@ def download_resume():
         if not resume_url:
             return jsonify({"error": "Missing resume URL"}), 400
 
-        # Log download
         db_jobportal.logs.insert_one({
             "adminEmail": admin_email,
             "jobId": job_id,
@@ -286,7 +283,6 @@ def download_resume():
             "timestamp": datetime.utcnow().isoformat()
         })
 
-        # Update download count
         resume_stats.update_one(
             {"resumeUrl": resume_url},
             {
@@ -301,7 +297,6 @@ def download_resume():
             upsert=True
         )
 
-        # Fetch and return file
         r = requests.get(resume_url, stream=True)
         if r.status_code != 200:
             return jsonify({"error": "Failed to download file"}), 500
@@ -314,7 +309,7 @@ def download_resume():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ✅ Get View/Download Stats for Resumes of a Job
+
 @candidate_bp.route("/admin/resume_stats", methods=["GET"])
 def get_resume_stats():
     try:
