@@ -165,11 +165,18 @@ def serialize_job(job):
 @candidate_bp.route('/api/jobs', methods=['GET'])
 def get_all_jobs():
     try:
-        jobs = list(db_jobportal.jobs.find({"status": "approved"}))
+        status = request.args.get("status")
+        query = {}
+
+        if status:
+            query["status"] = status
+
+        jobs = list(db_jobportal.jobs.find(query))
         serialized_jobs = [serialize_job(job) for job in jobs]
         return jsonify(serialized_jobs), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 # Get resumes for a specific job
 @candidate_bp.route('/resumes/<job_id>', methods=['GET'])
