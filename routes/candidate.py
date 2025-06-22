@@ -11,6 +11,7 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from flask import send_file
 
 candidate_bp = Blueprint("candidate", __name__)
 
@@ -185,3 +186,97 @@ def get_resumes(job_id):
         return jsonify({"resumes": result}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@candidate_bp.route("/approve-job/<job_id>", methods=["POST"])
+def approve_job(job_id):
+    try:
+        result = db_jobportal.jobs.update_one(
+            {"_id": ObjectId(job_id)},
+            {"$set": {"status": "approved"}}
+        )
+        if result.modified_count == 0:
+            return jsonify({"message": "Job not found or already approved"}), 404
+        return jsonify({"message": "Job approved"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@candidate_bp.route("/reject_job/<job_id>", methods=["POST"])
+def reject_job(job_id):
+    try:
+        data = request.get_json()
+        reason = data.get("reason", "No reason provided")
+
+        result = db_jobportal.jobs.update_one(
+            {"_id": ObjectId(job_id)},
+            {"$set": {"status": "rejected", "rejection_reason": reason}}
+        )
+        if result.modified_count == 0:
+            return jsonify({"message": "Job not found or already rejected"}), 404
+        return jsonify({"message": "Job rejected"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+# Store admin logs in 'logs' collection
+@candidate_bp.route("/log", methods=["POST"])
+def log_action():
+    try:
+        data = request.get_json()
+        db_jobportal.logs.insert_one({
+            "adminEmail": data.get("adminEmail"),
+            "jobId": data.get("jobId"),
+            "jobTitle": data.get("jobTitle"),
+            "action": data.get("action"),
+            "timestamp": data.get("timestamp", datetime.utcnow().isoformat())
+        })
+        return jsonify({"message": "Log saved"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@candidate_bp.route("/admin/jobs", methods=["GET"])
+def get_jobs_by_status():
+    try:
+        status = request.args.get("status", "pending").lower()
+        jobs = list(db_jobportal.jobs.find({"status": status}))
+        for job in jobs:
+            job["_id"] = str(job["_id"])
+        return jsonify(jobs), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@candidate_bp.route("/admin/logs", methods=["GET"])
+def get_logs():
+    try:
+        job_id = request.args.get("jobId")
+        if not job_id:
+            return jsonify({"error": "Missing jobId"}), 400
+
+        logs = list(db_jobportal.logs.find({"jobId": job_id}))
+        for log in logs:
+            log["_id"] = str(log["_id"])
+        return jsonify({"logs": logs}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@candidate_bp.route("/admin/download_resume", methods=["GET"])
+def download_resume():
+    try:
+        url = request.args.get("url")
+        if not url:
+            return jsonify({"error": "Missing resume URL"}), 400
+
+        # Download the file from Supabase (public URL)
+        r = requests.get(url, stream=True)
+        if r.status_code != 200:
+            return jsonify({"error": "Failed to download file"}), 500
+
+        # Save to temp file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            tmp.write(r.content)
+            tmp.flush()
+            return send_file(tmp.name, as_attachment=True, download_name="resume.pdf")
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
