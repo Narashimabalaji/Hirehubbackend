@@ -76,7 +76,6 @@ CORS(app,
      supports_credentials=True,
      allow_headers=["Authorization", "Content-Type"],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
-CORS(candidate_bp, origins=["https://hirehub04.netlify.app"], supports_credentials=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
