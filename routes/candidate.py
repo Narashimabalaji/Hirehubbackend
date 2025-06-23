@@ -231,9 +231,10 @@ def view_resume():
         job_id = request.args.get("jobId")
         job_title = request.args.get("jobTitle")
 
-        if not resume_url:
-            return jsonify({"error": "Missing resume URL"}), 400
+        if not resume_url or not job_id:
+            return jsonify({"error": "Missing resume URL or job ID"}), 400
 
+        # Log the view
         db_jobportal.logs.insert_one({
             "adminEmail": admin_email,
             "jobId": job_id,
@@ -243,13 +244,12 @@ def view_resume():
             "timestamp": datetime.utcnow().isoformat()
         })
 
+        # Track views
         resume_stats.update_one(
-            {"resumeUrl": resume_url},
+            {"resumeUrl": resume_url, "jobId": job_id},
             {
                 "$inc": {"view_count": 1},
                 "$setOnInsert": {
-                    "jobId": job_id,
-                    "resumeUrl": resume_url,
                     "resumeName": resume_url.split("/")[-1],
                     "download_count": 0
                 }
@@ -257,10 +257,12 @@ def view_resume():
             upsert=True
         )
 
-        return jsonify({"message": "View logged"}), 200
+        # 🔁 Redirect to resume
+        return redirect(resume_url)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 @candidate_bp.route("/admin/download_resume", methods=["GET"])
