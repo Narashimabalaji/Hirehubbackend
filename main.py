@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from apis.user_access import user_access_bp
 from utils.auth import auth
 from routes.admin import admin_bp
+from routes.admin_routes import admin_bp
 from routes.candidate import candidate_bp
 from routes.hire import hirer_bp
 from extensions import db
