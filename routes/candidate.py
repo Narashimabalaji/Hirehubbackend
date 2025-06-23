@@ -176,7 +176,7 @@ def get_all_jobs():
 @candidate_bp.route('/resumes/<job_id>', methods=['GET'])
 def get_resumes(job_id):
     try:
-        applications = applications_collection.find({"job_id": str(job_id)})
+        applications = jobs_collection.find({"job_id": str(job_id)})
         result = [{
             "name": app.get("name"),
             "email": app.get("email"),
