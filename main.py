@@ -3,7 +3,7 @@ from flask_cors import CORS
 from datetime import datetime, timezone
 from apis.user_access import user_access_bp
 from utils.auth import auth
-from routes.admin import admin_bp
+from routes.admin import admin_blp
 from routes.admin_routes import admin_bp
 from routes.candidate import candidate_bp
 from routes.hire import hirer_bp
@@ -30,6 +30,7 @@ def create_app():
     app.register_blueprint(user_access_bp)
     app.register_blueprint(hirer_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(admin_blp)
     app.register_blueprint(candidate_bp)
     app.register_blueprint(chatgroq_bp)
 
