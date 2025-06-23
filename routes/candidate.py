@@ -166,39 +166,33 @@ def serialize_job(job):
 def get_all_jobs():
     try:
         status = request.args.get("status")
-        query = {}
-        if status:
-            query["status"] = status
-
-        jobs = list(db_jobportal.jobs.find(query))
+        query = {"status": status} if status else {}
+        jobs = list(jobs_collection.find(query))
         serialized_jobs = [serialize_job(job) for job in jobs]
         return jsonify(serialized_jobs), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @candidate_bp.route('/resumes/<job_id>', methods=['GET'])
 def get_resumes(job_id):
     try:
-        applications = db_jobportal.applications.find({"job_id": str(job_id)})
+        applications = applications_collection.find({"job_id": str(job_id)})
         result = [{
             "name": app.get("name"),
             "email": app.get("email"),
             "resume_url": app.get("resume_url"),
             "uploaded_at": app.get("uploaded_at").isoformat() if isinstance(app.get("uploaded_at"), datetime) else app.get("uploaded_at")
         } for app in applications]
-
         return jsonify({"resumes": result}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @candidate_bp.route("/approve-job/<job_id>", methods=["POST"])
 def approve_job(job_id):
     try:
-        result = db_jobportal.jobs.update_one(
+        result = jobs_collection.update_one(
             {"_id": ObjectId(job_id)},
-            {"$set": {"status": "approved"}}
+            {"$set": {"status": "approved", "rejection_reason": ""}}
         )
         if result.modified_count == 0:
             return jsonify({"message": "Job not found or already approved"}), 404
@@ -206,13 +200,12 @@ def approve_job(job_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @candidate_bp.route("/reject_job/<job_id>", methods=["POST"])
 def reject_job(job_id):
     try:
         data = request.get_json()
         reason = data.get("reason", "No reason provided")
-        result = db_jobportal.jobs.update_one(
+        result = jobs_collection.update_one(
             {"_id": ObjectId(job_id)},
             {"$set": {"status": "rejected", "rejection_reason": reason}}
         )
@@ -222,7 +215,6 @@ def reject_job(job_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @candidate_bp.route("/admin/view_resume", methods=["GET"])
 def view_resume():
     try:
@@ -231,20 +223,18 @@ def view_resume():
         job_id = request.args.get("jobId")
         job_title = request.args.get("jobTitle")
 
-        if not resume_url or not job_id:
-            return jsonify({"error": "Missing resume URL or job ID"}), 400
+        if not all([resume_url, job_id, admin_email, job_title]):
+            return jsonify({"error": "Missing required parameters"}), 400
 
-        # Log the view
-        db_jobportal.logs.insert_one({
+        logs_collection.insert_one({
             "adminEmail": admin_email,
             "jobId": job_id,
             "jobTitle": job_title,
             "resumeUrl": resume_url,
             "action": "view",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow()
         })
 
-        # Track views
         resume_stats.update_one(
             {"resumeUrl": resume_url, "jobId": job_id},
             {
@@ -257,13 +247,9 @@ def view_resume():
             upsert=True
         )
 
-        # 🔁 Redirect to resume
-        return redirect(resume_url)
-
+        return jsonify({"message": "View logged", "resume_url": resume_url}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
 
 @candidate_bp.route("/admin/download_resume", methods=["GET"])
 def download_resume():
@@ -273,25 +259,23 @@ def download_resume():
         job_id = request.args.get("jobId")
         job_title = request.args.get("jobTitle")
 
-        if not resume_url:
-            return jsonify({"error": "Missing resume URL"}), 400
+        if not all([resume_url, admin_email, job_id, job_title]):
+            return jsonify({"error": "Missing required parameters"}), 400
 
-        db_jobportal.logs.insert_one({
+        logs_collection.insert_one({
             "adminEmail": admin_email,
             "jobId": job_id,
             "jobTitle": job_title,
             "resumeUrl": resume_url,
             "action": "download",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow()
         })
 
         resume_stats.update_one(
-            {"resumeUrl": resume_url},
+            {"resumeUrl": resume_url, "jobId": job_id},
             {
                 "$inc": {"download_count": 1},
                 "$setOnInsert": {
-                    "jobId": job_id,
-                    "resumeUrl": resume_url,
                     "resumeName": resume_url.split("/")[-1],
                     "view_count": 0
                 }
@@ -306,20 +290,31 @@ def download_resume():
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
             tmp.write(r.content)
             tmp.flush()
-            return send_file(tmp.name, as_attachment=True, download_name="resume.pdf")
-
+            return send_file(
+                tmp.name,
+                as_attachment=True,
+                download_name="resume.pdf",
+                mimetype="application/pdf"
+            )
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-@candidate_bp.route("/admin/resume_stats", methods=["GET"])
-def get_resume_stats():
+@candidate_bp.route("/admin/logs", methods=["GET"])
+def get_logs():
     try:
         job_id = request.args.get("jobId")
         if not job_id:
             return jsonify({"error": "Missing jobId"}), 400
 
-        stats = list(resume_stats.find({"jobId": job_id}, {"_id": 0}))
-        return jsonify({"stats": stats}), 200
+        logs = list(logs_collection.find({"jobId": job_id}))
+        serialized_logs = [{
+            "adminEmail": log["adminEmail"],
+            "jobId": log["jobId"],
+            "jobTitle": log["jobTitle"],
+            "resumeUrl": log["resumeUrl"],
+            "action": log["action"],
+            "timestamp": log["timestamp"].isoformat() if isinstance(log["timestamp"], datetime) else log["timestamp"]
+        } for log in logs]
+        return jsonify({"logs": serialized_logs}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
