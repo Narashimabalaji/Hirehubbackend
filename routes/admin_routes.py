@@ -5,7 +5,7 @@ from datetime import datetime
 import tempfile
 import requests
 
-admin_bp = Blueprint("admin", __name__)
+admin_bp = Blueprint("adminroute", __name__)
 
 client = MongoClient("mongodb+srv://vijayprabakaran1905:Mongodbhirehub@cluster0.uma8of4.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db = client["job_portal"]
