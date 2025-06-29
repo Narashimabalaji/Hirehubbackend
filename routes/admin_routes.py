@@ -11,7 +11,7 @@ client = MongoClient("mongodb+srv://vijayprabakaran1905:Mongodbhirehub@cluster0.
 db = client["job_portal"]
 
 # Fetch jobs by status
-@admin_bp.route('/api/jobs', methods=['GET'])
+@admin_bp.route('/api/fetchjobs', methods=['GET'])
 def get_jobs_by_status():
     status = request.args.get("status")
     query = {} if not status else {"status": status}
