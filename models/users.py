@@ -1,4 +1,3 @@
-from extensions import db 
 from pymongo import MongoClient
 from datetime import datetime
 from bson.objectid import ObjectId
