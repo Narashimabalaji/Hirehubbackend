@@ -21,17 +21,29 @@ def register_user():
         data = request.get_json()
         Emailid = data.get("Emailid")
         password = data.get("password")
-        userType=data.get("userType")
+        userType = data.get("userType")
 
         if not Emailid or not password:
             return jsonify({"message": "Emailid or password is missing"}), 400
 
-        result = users_collection.insert_one(new_user)
+        existing_user = users_collection.find_one({"Emailid": Emailid})
+        if existing_user:
+            return jsonify({"message": "Emailid already taken"}), 400
 
-        return jsonify({"message": "User created successfully", "user_id": str(result.inserted_id)}), 201
+        hashed_password = generate_password_hash(password)
+
+        
+        users_collection.insert_one({
+            "Emailid": Emailid,
+            "password": hashed_password,
+            "userType": userType
+        })
+
+        return jsonify({"message": "User created successfully"}), 201
 
     except Exception as e:
         return jsonify({"message": "Internal server error", "error": str(e)}), 500
+
 
 
 @user_access_bp.route("/login", methods=["POST"])
