@@ -19,13 +19,6 @@ def create_app():
     CORS(app, resources={r"/*": {"origins": "*"}})
     CORS(candidate_bp, origins=["https://hirehub04.netlify.app"], supports_credentials=True)
     CORS(app, resources={r"/*": {"origins": ["https://your-netlify-site.netlify.app"]}})
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
-    
-
-    db.init_app(app)
-
-    with app.app_context():
-        db.create_all()
 
     app.register_blueprint(user_access_bp)
     app.register_blueprint(hirer_bp)
