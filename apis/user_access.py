@@ -1,7 +1,8 @@
 from flask import request, jsonify,Blueprint
 from flask_restful import Resource, Api
 from werkzeug.security import generate_password_hash, check_password_hash
-from models.users import Userss
+from models.users import users_collection 
+
 from utils.auth import generate_accesstoken, generate_refresh_token, decode_token,user_refresh_tokens, monitor_token_expiry,REFRESH_SECRET
 from datetime import datetime, timedelta, timezone
 from extensions import db
