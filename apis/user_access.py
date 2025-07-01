@@ -8,7 +8,9 @@ from extensions import db
 
 
 user_access_bp = Blueprint('user_access', __name__)
-users_collection = db["users"]
+
+users_collection = db["users"] 
+
 
 
         
