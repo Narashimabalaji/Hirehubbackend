@@ -12,7 +12,7 @@ from utils.auth import decode_token, active_tokens
 from utils.chatgroq import chatgroq_bp
 
 
-EXEMPT_ROUTES = ['/register', '/login', '/refresh','/progress']  
+EXEMPT_ROUTES = ['/register', '/login', '/refresh','/progress','/forgot-password','/reset-password']  
 
 def create_app():
     app = Flask(__name__)
