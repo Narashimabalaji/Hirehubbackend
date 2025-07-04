@@ -29,8 +29,13 @@ def create_job(data):
         "qualification": data["qualification"],  # e.g., BE
         "category": data["category"],            # e.g., IT
         "keywords": data.get("keywords", []),
+        "salary":data.get("salary"),
+        "location":data.get("location"),
         "status": "pending",
         "created_by": data["hirer_id"],
+        "company_name":data.get("companyname"),
+        "hirername":data.get("hirername"),
+        "hireremailid":data.get("hireremailid"),
         "created_at": datetime.utcnow()
     }
     result = db_jobportal.jobs.insert_one(job)
