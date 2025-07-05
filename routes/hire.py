@@ -36,7 +36,7 @@ def post_job():
     else:
         # New hirer, create document with hirer_id
         hirer = {
-            "emailid": hirer_email,
+            "emailid": emailid,
             "userType": "hirer",
             "hirer_id": str(ObjectId()),  # permanent unique ID
             "jobposts": []
