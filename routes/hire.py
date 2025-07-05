@@ -17,10 +17,10 @@ def post_job():
     if not all(key in data for key in required):
         return jsonify({"error": "Missing required fields"}), 400
 
-    hirer_email = data["hireremailid"]
+    emailid = data["emailid"]
 
     # Check if hirer exists
-    hirer = db_jobportal.hirers.find_one({"emailid": hirer_email})
+    emailid = db_jobportal.hirers.find_one({"emailid": emailid})
 
     if hirer:
         jobposts = hirer.get("jobposts", [])
