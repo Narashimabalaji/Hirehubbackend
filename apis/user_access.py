@@ -115,7 +115,6 @@ def login_user():
             "Emailid": user["Emailid"],
             "access_token": access_token,
             "refresh_token": refreshToken,
-            "Emailid":user.get("Emailid")
             "userType": user.get("userType"),
             
         }), 200
