@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from models.users import create_job
 from pymongo import MongoClient
 from bson import ObjectId
+from datetime import datetime
 
 
 hirer_bp = Blueprint("hirer", __name__)
