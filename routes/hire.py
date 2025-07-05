@@ -88,9 +88,9 @@ def post_job():
     hirer_email = data["hireremailid"]
 
     # ✅ Always try to fetch the hirer
-    hirer = db_jobportal.hirers.find_one({"emailid": hirer_email})
+    jobs = db_jobportal.jobs.find_one({"emailid": hirer_email})
 
-    if hirer is None:
+    if jobs is None:
         # If not exists, create one
         hirer_id = str(ObjectId())
         db_jobportal.hirers.insert_one({
@@ -100,10 +100,10 @@ def post_job():
             "jobposts": []
         })
         # 🔁 Re-fetch newly inserted hirer
-        hirer = db_jobportal.hirers.find_one({"emailid": hirer_email})
+        jobs = db_jobportal.jobs.find_one({"emailid": hirer_email})
 
     # Now safely use `hirer`
-    if len(hirer.get("jobposts", [])) >= 25:
+    if len(jobs.get("jobposts", [])) >= 25:
         return jsonify({
             "error": "Job post limit reached",
             "message": "You have reached the limit of 25 job posts. For more, contact support@hirehub.com"
