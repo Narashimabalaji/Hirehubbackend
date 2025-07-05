@@ -115,7 +115,9 @@ def login_user():
             "Emailid": user["Emailid"],
             "access_token": access_token,
             "refresh_token": refreshToken,
-            "userType": user.get("userType")
+            "Emailid":user.get("Emailid")
+            "userType": user.get("userType"),
+            
         }), 200
 
     except Exception as e:
