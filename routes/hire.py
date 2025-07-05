@@ -58,7 +58,7 @@ def post_job():
 
     # Append to jobposts
     db_jobportal.hirers.update_one(
-        {"emailid": hirer_email},
+        {"emailid": emailid},
         {"$push": {"jobposts": job}}
     )
 
