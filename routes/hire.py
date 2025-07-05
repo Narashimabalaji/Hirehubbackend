@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from models.users import create_job
+from pymongo import MongoClient
 
 hirer_bp = Blueprint("hirer", __name__)
 
@@ -8,6 +9,9 @@ hirer_bp = Blueprint("hirer", __name__)
 #     data = request.get_json()
 #     job_id = create_job(data)
 #     return jsonify({"message": "Job submitted for approval", "job_id": job_id}), 201
+
+client = MongoClient("mongodb+srv://vijayprabakaran1905:Mongodbhirehub@cluster0.uma8of4.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+db_jobportal = client["job_portal"]
 
 @hirer_bp.route("/post-job", methods=["POST"])
 def post_job():
