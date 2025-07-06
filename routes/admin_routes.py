@@ -14,31 +14,46 @@ db = client["job_portal"]
 @admin_bp.route('/api/fetchjobs', methods=['GET'])
 def get_jobs_by_status():
     status = request.args.get("status")
-    query = {} if not status else {"status": status}
-    jobs = list(db.jobs.find(query))
-    for job in jobs:
-        job["_id"] = str(job["_id"])
+    jobs = []
+
+    hirers = db.hirers.find()
+    for hirer in hirers:
+        for job in hirer.get("jobposts", []):
+            if not status or job.get("status") == status:
+                job["hirer_email"] = hirer.get("emailid")
+                jobs.append(job)
+
     return jsonify(jobs), 200
+
 
 # Approve a job
 @admin_bp.route('/approve-job/<job_id>', methods=['POST'])
 def approve_job(job_id):
-    result = db.jobs.update_one({"_id": ObjectId(job_id)}, {"$set": {"status": "approved"}})
+    result = db.hirers.update_one(
+        {"jobposts.id": job_id},
+        {"$set": {"jobposts.$.status": "approved"}}
+    )
     if result.modified_count:
         return jsonify({"message": "Job approved"}), 200
     return jsonify({"error": "Job not found or already approved"}), 404
 
 # Reject a job
-@admin_bp.route('/reject_job/<job_id>', methods=['POST'])
+@admin_bp.route('/reject-job/<job_id>', methods=['POST'])
 def reject_job(job_id):
     reason = request.json.get("reason", "No reason provided.")
-    result = db.jobs.update_one(
-        {"_id": ObjectId(job_id)},
-        {"$set": {"status": "rejected", "rejection_reason": reason}}
+    result = db.hirers.update_one(
+        {"jobposts.id": job_id},
+        {
+            "$set": {
+                "jobposts.$.status": "rejected",
+                "jobposts.$.rejection_reason": reason
+            }
+        }
     )
     if result.modified_count:
         return jsonify({"message": "Job rejected"}), 200
     return jsonify({"error": "Job not found or already rejected"}), 404
+
 
 # Admin views a resume
 @admin_bp.route('/admin/view_resume', methods=['GET'])
