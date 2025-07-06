@@ -87,10 +87,18 @@ def upload_resume(job_id):
         if not all([email, name, resume_file]):
             return jsonify({"error": "Missing required fields"}), 400
 
-        # Check if job exists
-        job = db_jobportal.jobs.find_one({"_id": ObjectId(job_id)})
-        if not job:
+        # Find job inside jobposts array
+        hirer_doc = db_jobportal.hirers.find_one({
+            "jobposts.id": job_id
+        })
+
+        if not hirer_doc:
             return jsonify({"error": "Job not found"}), 404
+
+        # Extract job post if needed
+        job = next((j for j in hirer_doc["jobposts"] if j["id"] == job_id), None)
+        if not job:
+            return jsonify({"error": "Job not found inside hirer"}), 404
 
         # Generate secure filename
         filename = f"{uuid.uuid4()}_{secure_filename(resume_file.filename)}"
@@ -114,6 +122,27 @@ def upload_resume(job_id):
                 os.remove(temp_file_path)
 
         resume_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{filename}"
+
+        # Optionally log/save resume application
+        application_data = {
+            "job_id": job_id,
+            "job_title": job.get("title", ""),
+            "name": name,
+            "email": email,
+            "resume_url": resume_url,
+            "uploaded_at": datetime.utcnow()
+        }
+
+        db_jobportal.applications.insert_one(application_data)
+
+        return jsonify({
+            "message": "Resume uploaded successfully",
+            "resume_url": resume_url
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
         # Store application
         db_jobportal.applications.insert_one({
