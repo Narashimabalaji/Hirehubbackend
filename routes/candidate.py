@@ -123,15 +123,15 @@ def upload_resume(job_id):
 
         resume_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{filename}"
 
-        # Optionally log/save resume application
-        application_data = {
-            "job_id": job_id,
-            "job_title": job.get("title", ""),
-            "name": name,
-            "email": email,
-            "resume_url": resume_url,
-            "uploaded_at": datetime.utcnow()
-        }
+        # # Optionally log/save resume application
+        # application_data = {
+        #     "job_id": job_id,
+        #     "job_title": job.get("title", ""),
+        #     "name": name,
+        #     "email": email,
+        #     "resume_url": resume_url,
+        #     "uploaded_at": datetime.utcnow()
+        # }
 
         db_jobportal.applications.insert_one(application_data)
 
@@ -145,13 +145,14 @@ def upload_resume(job_id):
 
 
         # Store application
-        # db_jobportal.applications.insert_one({
-        #     "job_id": str(job_id),
-        #     "email": email,
-        #     "name": name,
-        #     "resume_url": resume_url,
-        #     "uploaded_at": datetime.utcnow()
-        # })
+        db_jobportal.applications.insert_one({
+            "job_id": str(job_id),
+            "job_title": job.get("title", ""),
+            "email": email,
+            "name": name,
+            "resume_url": resume_url,
+            "uploaded_at": datetime.utcnow()
+        })
 
         # Send email
         email_body = f"""
