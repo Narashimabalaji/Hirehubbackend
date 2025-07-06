@@ -145,13 +145,13 @@ def upload_resume(job_id):
 
 
         # Store application
-        db_jobportal.applications.insert_one({
-            "job_id": str(job_id),
-            "email": email,
-            "name": name,
-            "resume_url": resume_url,
-            "uploaded_at": datetime.utcnow()
-        })
+        # db_jobportal.applications.insert_one({
+        #     "job_id": str(job_id),
+        #     "email": email,
+        #     "name": name,
+        #     "resume_url": resume_url,
+        #     "uploaded_at": datetime.utcnow()
+        # })
 
         # Send email
         email_body = f"""
