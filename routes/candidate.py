@@ -155,23 +155,28 @@ def upload_resume(job_id):
         })
 
         # Send email
+# Save application first
+        db_jobportal.applications.insert_one(application_data)
+        
+        # Send confirmation email
         email_body = f"""
-Hi {name},
-
-Thank you for applying to the job: {job.get("title", "Unknown Job")}.
-Your resume has been successfully submitted.
-
-You can view your resume here: {resume_url}
-
-Best regards,
-Hire Hub Team
-"""
-   try:
-      send_email(email, "Application Submitted Successfully", email_body)
-    except Exception as e:
-      print(f"Email sending failed: {e}")
-
-
+        Hi {name},
+        
+        Thank you for applying to the job: {job.get("title", "Unknown Job")}.
+        Your resume has been successfully submitted.
+        
+        You can view your resume here: {resume_url}
+        
+        Best regards,
+        Hire Hub Team
+        """
+        
+        try:
+            send_email(email, "Application Submitted Successfully", email_body)
+        except Exception as e:
+            print(f"Email sending failed: {e}")
+        
+        # Return success after everything
         return jsonify({
             "message": "Resume uploaded successfully",
             "resume_url": resume_url
@@ -223,6 +228,7 @@ def get_all_jobs():
 @candidate_bp.route('/resumes/<job_id>', methods=['GET'])
 def get_resumes(job_id):
     try:
+        print(f"Fetching resumes for job ID: {job_id}")  # Add this
         applications = db_jobportal.applications.find({"job_id": str(job_id)})
         result = [{
             "name": app.get("name"),
@@ -234,3 +240,4 @@ def get_resumes(job_id):
         return jsonify({"resumes": result}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
