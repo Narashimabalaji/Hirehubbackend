@@ -32,7 +32,7 @@ def approve_job(job_id):
         {"jobposts.id": job_id},
         {"$set": {"jobposts.$.status": "approved"}}
     )
-    if result.modified_count:
+    if result.modified_count > 0:
         return jsonify({"message": "Job approved"}), 200
     return jsonify({"error": "Job not found or already approved"}), 404
 # Reject a job
