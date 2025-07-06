@@ -117,8 +117,13 @@ def post_job():
         "qualification": data.get("qualification", ""),
         "category": data.get("category", ""),
         "keywords": data.get("keywords", []),
+        "salary":data.get("salary", ""),
+        "location":data.get("location", ""),
         "status": "pending",
-        "created_by": hirer["hirer_id"],
+        "hirer_id": hirer["hirer_id"],
+        "hireremailid":data.get("hireremailid", ""),
+        "company_name":data.get("company_name", ""),
+        "hirername":data.get("hirername", ""),
         "created_at": datetime.utcnow()
     }
 
