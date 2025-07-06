@@ -26,14 +26,15 @@ def get_jobs_by_status():
     return jsonify(jobs), 200
 
 
-# Approve a job
 @admin_bp.route('/approve-job/<job_id>', methods=['POST'])
 def approve_job(job_id):
-    result = db.hirers.update_one({"_id": id, {"$set": {"status": "approved"}})
+    result = db.hirers.update_one(
+        {"jobposts.id": job_id},
+        {"$set": {"jobposts.$.status": "approved"}}
+    )
     if result.modified_count:
         return jsonify({"message": "Job approved"}), 200
     return jsonify({"error": "Job not found or already approved"}), 404
-
 # Reject a job
 @admin_bp.route('/reject-job/<job_id>', methods=['POST'])
 def reject_job(job_id):
