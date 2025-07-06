@@ -56,22 +56,20 @@ def reject_job(job_id):
 
 # Admin views a resume
 @admin_bp.route('/admin/view_resume', methods=['GET'])
-def log_resume_view():
-    url = request.args.get("url")
-    admin_email = request.args.get("adminEmail")
-    job_id = request.args.get("jobId")
-    job_title = request.args.get("jobTitle")
+def get_resumes(job_id):
+    try:
+        print(f"Fetching resumes for job ID: {job_id}")  # Add this
+        applications = db_jobportal.applications.find({"job_id": str(job_id)})
+        result = [{
+            "name": app.get("name"),
+            "email": app.get("email"),
+            "resume_url": app.get("resume_url"),
+            "uploaded_at": app.get("uploaded_at").isoformat() if isinstance(app.get("uploaded_at"), datetime) else app.get("uploaded_at")
+        } for app in applications]
 
-    db.logs.insert_one({
-        "resume": url,
-        "email": admin_email,
-        "job_id": job_id,
-        "job_title": job_title,
-        "action": "viewed",
-        "timestamp": datetime.utcnow()
-    })
-
-    return jsonify({"resume_url": url})
+        return jsonify({"resumes": result}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Admin downloads a resume
 @admin_bp.route('/admin/download_resume', methods=['GET'])
