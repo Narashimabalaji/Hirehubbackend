@@ -166,7 +166,11 @@ You can view your resume here: {resume_url}
 Best regards,
 Hire Hub Team
 """
-        send_email(email, "Application Submitted Successfully", email_body)
+   try:
+      send_email(email, "Application Submitted Successfully", email_body)
+    except Exception as e:
+      print(f"Email sending failed: {e}")
+
 
         return jsonify({
             "message": "Resume uploaded successfully",
