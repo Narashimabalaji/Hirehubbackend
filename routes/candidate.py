@@ -134,30 +134,7 @@ def upload_resume(job_id):
         }
 
         db_jobportal.applications.insert_one(application_data)
-
-        return jsonify({
-            "message": "Resume uploaded successfully",
-            "resume_url": resume_url
-        }), 200
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-        # Store application
-        db_jobportal.applications.insert_one({
-            "job_id": str(job_id),
-            "job_title": job.get("title", ""),
-            "email": email,
-            "name": name,
-            "resume_url": resume_url,
-            "uploaded_at": datetime.utcnow()
-        })
-
-        # Send email
-# Save application first
-        db_jobportal.applications.insert_one(application_data)
-        
+       
         # Send confirmation email
         email_body = f"""
         Hi {name},
