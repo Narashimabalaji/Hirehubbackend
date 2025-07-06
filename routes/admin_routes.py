@@ -35,6 +35,7 @@ def approve_job(job_id):
     if result.modified_count > 0:
         return jsonify({"message": "Job approved"}), 200
     return jsonify({"error": "Job not found or already approved"}), 404
+
 # Reject a job
 @admin_bp.route('/reject-job/<job_id>', methods=['POST'])
 def reject_job(job_id):
