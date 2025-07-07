@@ -18,7 +18,7 @@ def create_app():
     app = Flask(__name__)
     CORS(app, resources={r"/*": {"origins": "*"}})
     CORS(candidate_bp, origins=["https://hirehub04.netlify.app"], supports_credentials=True)
-    CORS(app, resources={r"/*": {"origins": ["https://your-netlify-site.netlify.app"]}})
+    CORS(app, resources={r"/*": {"origins": ["https://your-netlify-site.netlify.app","https://localhost:3000"]}})
 
     app.register_blueprint(user_access_bp)
     app.register_blueprint(hirer_bp)
