@@ -68,7 +68,7 @@ app = create_app()
 CORS(app, resources={r"/*": {"origins": "*"}})
 CORS(app, resources={r"/*": {"origins": ["https://your-netlify-site.netlify.app","https://localhost:3000"]}})
 CORS(app,
-     origins=["https://hirehub04.netlify.app"],  # your frontend URL
+     origins=["https://hirehub04.netlify.app","https://localhost:3000"],  # your frontend URL
      supports_credentials=True,
      allow_headers=["Authorization", "Content-Type"],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
