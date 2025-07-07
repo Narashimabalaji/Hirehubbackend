@@ -66,7 +66,7 @@ def create_app():
 
 app = create_app()  
 CORS(app, resources={r"/*": {"origins": "*"}})
-CORS(app, resources={r"/*": {"origins": ["https://your-netlify-site.netlify.app"]}})
+CORS(app, resources={r"/*": {"origins": ["https://your-netlify-site.netlify.app","https://localhost:3000"]}})
 CORS(app,
      origins=["https://hirehub04.netlify.app"],  # your frontend URL
      supports_credentials=True,
