@@ -18,7 +18,7 @@ def create_app():
     app = Flask(__name__)
     CORS(app, resources={r"/*": {"origins": "*"}})
     CORS(candidate_bp, origins=["https://hirehub04.netlify.app"], supports_credentials=True)
-    CORS(app, resources={r"/*": {"origins": ["https://your-netlify-site.netlify.app","https://localhost:3000"]}})
+    CORS(app, resources={r"/*": {"origins": ["https://your-netlify-site.netlify.app","https://localhost:3000","http://localhost:3000"]}})
 
     app.register_blueprint(user_access_bp)
     app.register_blueprint(hirer_bp)
@@ -66,9 +66,9 @@ def create_app():
 
 app = create_app()  
 CORS(app, resources={r"/*": {"origins": "*"}})
-CORS(app, resources={r"/*": {"origins": ["https://your-netlify-site.netlify.app","https://localhost:3000"]}})
+CORS(app, resources={r"/*": {"origins": ["https://your-netlify-site.netlify.app","https://localhost:3000","http://localhost:3000"]}})
 CORS(app,
-     origins=["https://hirehub04.netlify.app","https://localhost:3000"],  # your frontend URL
+     origins=["https://hirehub04.netlify.app","https://localhost:3000","http://localhost:3000"],  # your frontend URL
      supports_credentials=True,
      allow_headers=["Authorization", "Content-Type"],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
