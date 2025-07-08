@@ -10,7 +10,7 @@ from routes.hire import hirer_bp
 from extensions import db
 from utils.auth import decode_token, active_tokens  
 from utils.chatgroq import chatgroq_bp
-from auth import auth
+from utils.auth import auth
 
 
 EXEMPT_ROUTES = ['/register', '/login', '/refresh','/progress','/forgot-password','/reset-password']  
