@@ -17,7 +17,7 @@ EXEMPT_ROUTES = ['/register', '/login', '/refresh','/progress','/forgot-password
 def create_app():
     app = Flask(__name__)
     CORS(app,
-         origins=["http://localhost:3000", "https://localhost:3000", "https://hirehub04.netlify.app"],
+         origins=["http://localhost:3000", "https://localhost:3000", "https://hirehub25.netlify.app"],
          supports_credentials=True,
          allow_headers=["Authorization", "Content-Type"],
          methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
