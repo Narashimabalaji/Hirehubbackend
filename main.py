@@ -16,7 +16,7 @@ EXEMPT_ROUTES = ['/register', '/login', '/refresh','/progress','/forgot-password
 
 def create_app():
     app = Flask(__name__)
-   CORS(app, origins="*")  # no credentials
+    CORS(app, origins="*") 
 
     app.register_blueprint(user_access_bp)
     app.register_blueprint(hirer_bp)
