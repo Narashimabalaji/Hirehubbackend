@@ -99,7 +99,7 @@ def post_job():
             "hirer_id": hirer_id,
             "jobposts": []
         })
-        # 🔁 Re-fetch newly inserted hirer
+        
         hirer = db_jobportal.hirers.find_one({"emailid": hirer_email})
 
     # Now safely use `hirer`
@@ -122,7 +122,7 @@ def post_job():
         "status": "pending",
         "hirer_id": hirer["hirer_id"],
         "hireremailid":data.get("hireremailid", ""),
-        "company_name":data.get("company_name", ""),
+        "company":data.get("company~", ""),
         "hirername":data.get("hirername", ""),
         "created_at": datetime.utcnow()
     }
