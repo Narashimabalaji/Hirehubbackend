@@ -172,6 +172,7 @@ def serialize_job(job):
         "category": job.get("category"),
         "salary":job.get("salary"),
         "location":job.get("location"),
+        "company":job.company("company"),
         "hireremailid":job.get("hireremailid"),
         "hirername":job.get("hirername"),
         "keywords": job.get("keywords", []),
