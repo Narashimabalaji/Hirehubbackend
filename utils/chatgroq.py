@@ -87,7 +87,7 @@ def build_prompt(user_question, resume_text=None, job_list=None):
     try:
         detected_lang = detect(user_question)
     except:
-        detected_lang = "en"  # fallback to English
+        detected_lang = "en"  # fallback to English if detection fails
 
     system_msg = (
         "You are a helpful AI assistant. "
@@ -95,8 +95,12 @@ def build_prompt(user_question, resume_text=None, job_list=None):
         "Do not make up any job openings or qualifications. "
     )
 
+    # Only switch language if it's not English
     if detected_lang != "en":
-        system_msg += f"Respond in the detected language: {detected_lang.upper()}. "
+        system_msg += (
+            f"Respond in {detected_lang.upper()} only if the user's question is in that language. "
+            f"Otherwise, respond in English."
+        )
     else:
         system_msg += "Respond in English."
 
@@ -119,16 +123,15 @@ def build_prompt(user_question, resume_text=None, job_list=None):
         f"{resume_section}\n\n"
         f"Available Job Listings:\n{jobs_info}\n\n"
         f"User Question: {user_question}\n\n"
-        f"Answer in {detected_lang.upper()} if the question is in that language. "
-        f"If any job matches the user's qualification, mention them specifically. "
-        f"Do not say no jobs exist unless the job list above is empty."
+        f"Answer based only on the listings above. "
+        f"If any job matches the user's qualification, mention them clearly. "
+        f"Do not say no jobs exist unless the job list is empty."
     )
 
     return [
         {"role": "system", "content": system_msg},
         {"role": "user", "content": user_prompt}
     ]
-
 def chat_with_groq(messages):
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
