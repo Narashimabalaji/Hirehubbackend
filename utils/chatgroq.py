@@ -8,6 +8,8 @@ import os
 import requests
 import re
 from dotenv import load_dotenv
+from langdetect import detect
+
 
 chatgroq_bp = Blueprint("chatgroq", __name__)
 
@@ -23,7 +25,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # --- MongoDB ---
 client = MongoClient("mongodb+srv://vijayprabakaran1905:Mongodbhirehub@cluster0.uma8of4.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db = client["job_portal"]
-jobs_collection = db.jobs
+jobs_collection = db.hirers
 
 # --- Utilities ---
 
@@ -36,44 +38,67 @@ def extract_text_from_pdf(filepath):
 
 def fetch_jobs_matching(text_input=None, filters=None):
     query = {"status": "approved"}
+    matched_jobs = []
 
-    # --- When filters are explicitly provided ---
-    if filters:
-        if "qualification" in filters and filters["qualification"]:
-            qualifications = [q.strip() for q in filters["qualification"].split(",")]
-            query["qualification"] = {"$in": qualifications}
+    for hirer in jobs_collection.find():
+        for job in hirer.get("jobposts", []):
+            # Match status
+            if job.get("status") != "approved":
+                continue
 
-        if "keywords" in filters and isinstance(filters["keywords"], list):
-            query["keywords"] = {"$in": filters["keywords"]}
+            # --- FILTER-BASED SEARCH ---
+            if filters:
+                match = True
+                if "qualification" in filters and filters["qualification"]:
+                    qualifications = [q.strip().lower() for q in filters["qualification"].split(",")]
+                    if job.get("qualification", "").lower() not in qualifications:
+                        match = False
+                if "keywords" in filters and filters["keywords"]:
+                    if not any(kw.lower() in [k.lower() for k in job.get("keywords", [])] for kw in filters["keywords"]):
+                        match = False
+                if "category" in filters and filters["category"]:
+                    if job.get("category", "").lower() != filters["category"].lower():
+                        match = False
+                if "title" in filters and filters["title"]:
+                    if filters["title"].lower() not in job.get("title", "").lower():
+                        match = False
+                if match:
+                    matched_jobs.append(job)
 
-        if "category" in filters and filters["category"]:
-            query["category"] = filters["category"]
+            # --- TEXT-BASED SEARCH (e.g., from resume or question) ---
+            elif text_input:
+                text_input = text_input.lower()
+                combined = (
+                    job.get("title", "") + " " +
+                    job.get("description", "") + " " +
+                    job.get("qualification", "") + " " +
+                    " ".join(job.get("keywords", []))
+                ).lower()
 
-        if "title" in filters and filters["title"]:
-            query["title"] = {"$regex": filters["title"], "$options": "i"}
+                if any(word in combined for word in text_input.split()):
+                    matched_jobs.append(job)
 
-    # --- When raw text is provided (like from question/resume) ---
-    elif text_input:
-        keywords = set(re.findall(r'\w+', text_input.lower()))
-        if keywords:
-            regex_pattern = "|".join(re.escape(word) for word in keywords)
-            query["$or"] = [
-                {"qualification": {"$regex": regex_pattern, "$options": "i"}},
-                {"description": {"$regex": regex_pattern, "$options": "i"}},
-                {"title": {"$regex": regex_pattern, "$options": "i"}},
-                {"keywords": {"$in": list(keywords)}},  # <--- NEW: checks keyword list
-            ]
+    return matched_jobs[:10]  # Limit to 10
 
-    return list(jobs_collection.find(query).limit(10))
 
 
 
 def build_prompt(user_question, resume_text=None, job_list=None):
+    try:
+        detected_lang = detect(user_question)
+    except:
+        detected_lang = "en"  # fallback to English
+
     system_msg = (
         "You are a helpful AI assistant. "
         "Only use the provided job listings from the database to answer the user's question. "
-        "Do not make up any job openings or qualifications. If a qualification matches, explain clearly which jobs match."
+        "Do not make up any job openings or qualifications. "
     )
+
+    if detected_lang != "en":
+        system_msg += f"Respond in the detected language: {detected_lang.upper()}. "
+    else:
+        system_msg += "Respond in English."
 
     resume_section = f"User Resume:\n{resume_text}" if resume_text else "No resume provided."
 
@@ -94,7 +119,7 @@ def build_prompt(user_question, resume_text=None, job_list=None):
         f"{resume_section}\n\n"
         f"Available Job Listings:\n{jobs_info}\n\n"
         f"User Question: {user_question}\n\n"
-        f"Answer based strictly on the listings above. "
+        f"Answer in {detected_lang.upper()} if the question is in that language. "
         f"If any job matches the user's qualification, mention them specifically. "
         f"Do not say no jobs exist unless the job list above is empty."
     )

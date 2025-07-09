@@ -219,3 +219,157 @@ def get_resumes(job_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+def serialize_jobs(job):
+    return {
+        "id": str(job.get("id")),
+        "title": job.get("title"),
+        "description": job.get("description"),
+        "qualification": job.get("qualification"),
+        "category": job.get("category"),
+        "salary": job.get("salary"),
+        "location": job.get("location"),
+        "company": job.get("company_name"),  # corrected key from your DB
+        "hireremailid": job.get("hireremailid"),
+        "hirername": job.get("hirername"),
+        "keywords": job.get("keywords", []),
+        "status": job.get("status"),
+        "created_by": job.get("created_by", ""),  # fallback if missing
+        "created_at": (
+            job.get("created_at").isoformat()
+            if isinstance(job.get("created_at"), datetime)
+            else job.get("created_at")
+        ),
+    }
+
+@candidate_bp.route('/particularjob/<string:job_id>', methods=['GET'])
+def get_job_by_id(job_id):
+    try:
+        # Search through all hirers
+        hirers = db_jobportal.hirers.find()
+
+        for hirer in hirers:
+            jobposts = hirer.get("jobposts", [])
+            for job in jobposts:
+                if str(job.get("id")) == job_id:
+                    # Add hirer data to the job for response
+                    job["hireremailid"] = hirer.get("emailid")
+                    job["hirername"] = hirer.get("name", "")
+                    return jsonify(serialize_jobs(job)), 200
+
+        return jsonify({"error": "Job not found"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@candidate_bp.route('/posted/hirer_jobs', methods=['POST'])
+def get_jobs_by_hirer_email():
+    try:
+        data = request.get_json()
+        email = data.get("emailid")
+
+        if not email:
+            return jsonify({"error": "Missing emailid in request"}), 400
+
+        hirer = db_jobportal.hirers.find_one({"emailid": email})
+        if not hirer:
+            return jsonify({"error": "No hirer found with that email"}), 404
+
+        jobposts = hirer.get("jobposts", [])
+
+        # Add hirer info to each job for frontend
+        job_data = []
+        for job in jobposts:
+            job["hireremailid"] = hirer.get("emailid")
+            job["hirername"] = hirer.get("name", "")
+            job_data.append(serialize_jobs(job))
+
+        return jsonify(job_data), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@candidate_bp.route('/save_job', methods=['POST'])
+def save_job_for_user():
+    try:
+        data = request.get_json()
+        email = data.get("emailid")
+        job_id = data.get("job_id")
+
+        if not email or not job_id:
+            return jsonify({"error": "Missing emailid or job_id"}), 400
+
+        user = db_jobportal.users.find_one({"Emailid": email, "userType": "seeker"})
+        if not user:
+            return jsonify({"error": "User not found or not a seeker"}), 404
+
+        # Add job ID if not already in saved list
+        db_jobportal.users.update_one(
+            {"Emailid": email},
+            {"$addToSet": {"saved_jobs": job_id}}
+        )
+
+        return jsonify({"message": "Job saved successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@candidate_bp.route('/unsave_job', methods=['POST'])
+def unsave_job():
+    try:
+        data = request.get_json()
+        email = data.get("emailid")
+        job_id = data.get("job_id")
+
+        if not email or not job_id:
+            return jsonify({"error": "Missing emailid or job_id"}), 400
+
+        result = db_jobportal.users.update_one(
+            {"Emailid": email},
+            {"$pull": {"saved_jobs": job_id}}
+        )
+
+        return jsonify({"message": "Job removed from saved list"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@candidate_bp.route('/saved_jobs/<string:email>', methods=['GET'])
+def get_saved_jobs(email):
+    try:
+        # 1. Find seeker user by email
+        user = db_jobportal.users.find_one({"Emailid": email, "userType": "seeker"})
+        if not user:
+            return jsonify({"error": "User not found or not a seeker"}), 404
+
+        saved_ids = user.get("saved_jobs", [])
+        if not saved_ids:
+            return jsonify([]), 200  # No saved jobs
+
+        # 2. Go through hirers and match jobs
+        saved_jobs = []
+        hirers = db_jobportal.hirers.find()
+
+        for hirer in hirers:
+            for job in hirer.get("jobposts", []):
+                if str(job.get("id")) in saved_ids:
+                    # Attach hirer info
+                    job["hireremailid"] = hirer.get("emailid")
+                    job["hirername"] = hirer.get("name", "")
+                    saved_jobs.append(serialize_jobs(job))  # Use your serializer
+
+        return jsonify(saved_jobs), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
+
+
+
+
