@@ -9,6 +9,9 @@ import requests
 import re
 from dotenv import load_dotenv
 from langdetect import detect
+from flask import Response, stream_with_context
+from openai import OpenAI
+
 
 
 chatgroq_bp = Blueprint("chatgroq", __name__)
@@ -18,6 +21,13 @@ chatgroq_bp = Blueprint("chatgroq", __name__)
 GROQ_API_KEY = "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"
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 MODEL_NAME = "llama3-70b-8192"
+
+
+MODEL = "llama3-70b-8192"
+
+BASE_URL="https://api.groq.com/openai/v1"
+# Initialize the client
+openai_client = OpenAI(api_key="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", base_url=BASE_URL)
 
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -196,3 +206,79 @@ def upload_resume_and_chat():
         "matched_jobs": [job.get("title") for job in jobs],
         "response": ai_response
     })
+
+@chatgroq_bp.route("/generatedescription", methods=["POST"])
+def job_description_generation():
+    try:
+        data = request.json
+
+        title = data.get("title", "").strip()
+        category = data.get("category", "").strip()
+        experience = data.get("experience", "").strip()
+        keywords = data.get("keywords", "").strip()
+
+        if not title or not category or not experience or not keywords:
+            return jsonify({"error": "All fields are required."}), 400
+
+        prompt = f"""
+You are an expert HR content writer. Write a clear, engaging, and inclusive job description for the following role:
+
+- **Job Title:** {title}
+- **Category/Department:** {category}
+- **Experience Required:** {experience}
+- **Keywords/Skills:** {keywords}
+
+Format the output in clean, structured Markdown with these sections:
+
+### Job Title  
+{title}
+
+### Department  
+{category}
+
+### About the Role  
+Write a brief overview of the position, its mission, and its value to the organization.
+
+### Responsibilities  
+Use action-oriented bullet points tailored to the experience level and keywords provided.
+
+### Required Qualifications  
+Based on the experience and keywords, include technical and soft skills in bullets.
+
+### Benefits  
+Include a short placeholder section of benefits.
+
+### Equal Opportunity Statement  
+Add a standard, inclusive EEO message.
+
+Use inclusive and professional tone.
+        """
+
+        api_key = "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"
+        api_base = "https://api.groq.com/openai/v1"
+        model = "llama3-70b-8192"
+
+        client = OpenAI(api_key=api_key, base_url=api_base)
+
+        stream = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant who writes high-quality job descriptions."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=1000,
+            stream=True
+        )
+
+        # Safely collect content
+        full_response = ""
+        for chunk in stream:
+            content = getattr(chunk.choices[0].delta, "content", None)
+            if content:
+                full_response += content
+
+        return jsonify({"description": full_response})
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to generate description: {str(e)}"}), 500
