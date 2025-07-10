@@ -11,7 +11,7 @@ REFRESH_SECRET = "SUPER-REFRESH-KEY"
 active_tokens = {}
 def generate_accesstoken(user_id):
     try:
-        expiration_time = datetime.now(tz=timezone.utc) + timedelta(minutes=7)
+        expiration_time = datetime.now(tz=timezone.utc) + timedelta(minutes=30)
         payload = {"user_id": user_id, "exp": expiration_time.timestamp()}
         token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
         token_str = token if isinstance(token, str) else token.decode('utf-8')
@@ -24,7 +24,7 @@ user_refresh_tokens = {}
 
 def generate_refresh_token(user_id):
     try:
-        expiration_time = datetime.now(tz=timezone.utc) + timedelta(minutes=30)
+        expiration_time = datetime.now(tz=timezone.utc) + timedelta(minutes=90)
         payload = {"user_id": user_id, "exp": expiration_time.timestamp()}
         refresh_token = jwt.encode(payload, REFRESH_SECRET, algorithm="HS256")
 
