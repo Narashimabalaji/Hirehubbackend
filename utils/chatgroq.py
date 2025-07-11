@@ -205,14 +205,23 @@ def job_description_generation():
     try:
         data = request.json
 
-        title = data.get("title", "").strip()
-        category = data.get("category", "").strip()
-        experience = data.get("experience", "").strip()
-        keywords = data.get("keywords", "").strip()
+        # Safely convert inputs to string
+        title = str(data.get("title", "")).strip()
+        category = str(data.get("category", "")).strip()
+        experience = str(data.get("experience", "")).strip()
 
+        # Handle keywords which might be a list or string
+        raw_keywords = data.get("keywords", [])
+        if isinstance(raw_keywords, list):
+            keywords = ", ".join(map(str, raw_keywords)).strip()
+        else:
+            keywords = str(raw_keywords).strip()
+
+        # Basic validation
         if not title or not category or not experience or not keywords:
             return jsonify({"error": "All fields are required."}), 400
 
+        # Prompt construction
         prompt = f"""
 You are an expert HR content writer. Write a clear, engaging, and inclusive job description for the following role:
 
@@ -247,12 +256,14 @@ Add a standard, inclusive EEO message.
 Use inclusive and professional tone.
         """
 
+        # LLaMA-3 Groq setup
         api_key = "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"
         api_base = "https://api.groq.com/openai/v1"
         model = "llama3-70b-8192"
 
         client = OpenAI(api_key=api_key, base_url=api_base)
 
+        # Streaming response from Groq
         stream = client.chat.completions.create(
             model=model,
             messages=[
@@ -264,7 +275,7 @@ Use inclusive and professional tone.
             stream=True
         )
 
-        # Safely collect content
+        # Accumulate content from stream
         full_response = ""
         for chunk in stream:
             content = getattr(chunk.choices[0].delta, "content", None)
@@ -275,4 +286,3 @@ Use inclusive and professional tone.
 
     except Exception as e:
         return jsonify({"error": f"Failed to generate description: {str(e)}"}), 500
-
