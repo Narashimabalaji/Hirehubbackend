@@ -122,7 +122,7 @@ def post_job():
         "status": "pending",
         "hirer_id": hirer["hirer_id"],
         "hireremailid":data.get("hireremailid", ""),
-        "company":data.get("company~", ""),
+        "company":data.get("company", ""),
         "hirername":data.get("hirername", ""),
         "created_at": datetime.utcnow()
     }

@@ -228,7 +228,7 @@ def serialize_jobs(job):
         "category": job.get("category"),
         "salary": job.get("salary"),
         "location": job.get("location"),
-        "company": job.get("company_name"),  # corrected key from your DB
+        "company": job.get("company"),  # corrected key from your DB
         "hireremailid": job.get("hireremailid"),
         "hirername": job.get("hirername"),
         "keywords": job.get("keywords", []),
