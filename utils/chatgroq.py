@@ -245,7 +245,7 @@ Add a standard, inclusive EEO message.
 Use inclusive and professional tone.
         """
 
-        api_key = "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"
+        api_key = "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"
         api_base = "https://api.groq.com/openai/v1"
         model = "llama3-70b-8192"
 
@@ -273,3 +273,4 @@ Use inclusive and professional tone.
 
     except Exception as e:
         return jsonify({"error": f"Failed to generate description: {str(e)}"}), 500
+
